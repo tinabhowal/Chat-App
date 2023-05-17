@@ -1,3 +1,5 @@
+
+
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, KeyboardAvoidingView, Platform, ImageBackground } from 'react-native';
 import { GiftedChat, Bubble, Avatar, InputToolbar } from "react-native-gifted-chat";
@@ -6,6 +8,7 @@ import { collection, addDoc, onSnapshot, query, orderBy } from "firebase/firesto
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomActions from './CustomActions';
 import MapView from 'react-native-maps';
+import { Video } from 'expo-av';
 
 
 const Chat = ({ db, route, navigation, isConnected, storage }) => {
@@ -137,6 +140,23 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
     }
     return null;
   };
+
+  const renderMessageVideo = (props) => {
+    const { currentMessage } = props;
+    if (currentMessage.video) {
+    return (
+      <View>
+        {/* <Text>{currentMessage.video}</Text> */}
+        <Video
+          source={{ uri: currentMessage.video }}
+          style={{ width: 200, height: 200 }}
+          useNativeControls
+        />
+      </View>
+    );
+   }
+   return null;
+  };
     
 
   return (
@@ -150,6 +170,7 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
         renderActions={renderCustomActions}
         renderInputToolbar={renderInputToolbar}
         renderCustomView={renderCustomView}
+        renderMessageVideo={renderMessageVideo}
         onSend={messages => onSend(messages)}
         user={{
           _id: userID,
@@ -186,9 +207,3 @@ const styles = StyleSheet.create({
 });
 
 export default Chat;
-
-
-
-
-
-

@@ -1,5 +1,14 @@
 {
   "expo": {
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(name) to access your camera.",
+          "microphonePermission": "Allow $(name) to access your microphone."
+        }
+      ]
+    ],
     "name": "App",
     "slug": "App",
     "version": "1.0.0",
@@ -18,6 +27,7 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": ["CAMERA", "RECORD_AUDIO"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
