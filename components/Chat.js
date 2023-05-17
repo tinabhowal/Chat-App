@@ -1,120 +1,79 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, KeyboardAvoidingView, Platform, ImageBackground } from 'react-native';
-import { GiftedChat, Bubble, Avatar } from "react-native-gifted-chat";
+import { GiftedChat, Bubble, Avatar, InputToolbar } from "react-native-gifted-chat";
 import doodle from '../assets/doodle.png';
-import { collection, getDocs, addDoc, onSnapshot, query, where, orderBy } from "firebase/firestore";
-import { auth } from 'firebase/app';
+import { collection, addDoc, onSnapshot, query, orderBy } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustomActions from './CustomActions';
+import MapView from 'react-native-maps';
 
-const Chat = ({ db, route, navigation, isConnected }) => {
+
+const Chat = ({ db, route, navigation, isConnected, storage }) => {
     
   const { name, selectedColor, userID } = route.params;
   const [messages, setMessages] = useState([]);
   const [messageBackgroundColor, setMessageBackgroundColor] = useState('gray');
-  const [isFirstConnection, setIsFirstConnection] = useState(true);
+  //const [isFirstConnection, setIsFirstConnection] = useState(true);
   
-  // const onSend = (newMessages) => {
-  //   setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages))
-  // }
-
-
-//useeffect beofre async
-  // useEffect(() => {
-  //   navigation.setOptions({ title: name });
-
-  //   const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-  //   const unsubMessages = onSnapshot(q, (snapshot) => {
-  //     let newMessages = [];
-  //     snapshot.forEach((doc) => {
-  //       const data = doc.data();
-  //       newMessages.push({
-  //         _id: doc.id,
-  //         text: data.text,
-  //         createdAt: new Date(data.createdAt.toMillis()),
-  //         user: {
-  //           _id: data.user._id,
-  //           name: data.user.name,
-  //           avatar: "https://placeimg.com/140/140/any"
-  //         },
-      
-  //       });
-  //     });
-  //     setMessages(newMessages);
-  //   });
-
-  //   return () => {
-  //     if (unsubMessages) unsubMessages();
-  //   };
-  // }, []);
-
-  // useeffect after async
-  const cacheMessages = async (messagesToCache) => {
-    try {
-      await AsyncStorage.setItem('async_messages', JSON.stringify(messagesToCache));
-    } catch (error) {
-      console.log(error.message);
-    }
-  }
-
-  const loadCachedMessages = async () => {
-    const cachedMessages = await AsyncStorage.getItem("async_messages") || [];
-    setLists(JSON.parse(cachedMessages));
-  }
-  
-  let unsubMessages;
+    
+  let unsubscribeMessages;
   useEffect(() => {
     navigation.setOptions({ title: name });
     if (isConnected === true) {
-    
-    // unregister current onSnapshot() listener to avoid registering multiple listeners when useEffect code is re-executed.
-    if (unsubMessages) unsubShoppinglists();
-    unsubMessages = null;
+      // unregister current onSnapshot() listener to avoid registering multiple listeners when
+      // useEffect code is re-executed.
+      if (unsubscribeMessages) unsubscribeMessages();
+      unsubscribeMessages = null;
 
-    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-    unsubMessages = onSnapshot(q, async (snapshot) => {
-      let newMessages = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        newMessages.push({
-          _id: doc.id,
-          text: data.text,
-          createdAt: new Date(data.createdAt.toMillis()),
-          user: {
-            _id: data.user._id,
-            name: data.user.name,
-            avatar: "https://placeimg.com/140/140/any"
-          },
-        });
-
-        cacheMessages(newMessages);
-        setMessages(newMessages);
-      });   
-
-      if (isFirstConnection) {
-        setIsFirstConnection(false);
-      }
-
-    });
-  } else {
-    loadCachedMessages();
-    setIsFirstConnection(true);
-  }
-      
+      unsubscribeMessages = onSnapshot(
+        query(collection(db, "messages"), orderBy("createdAt", "desc")),
+        async (documentsSnapshot) => {
+          let newMessages = [];
+          documentsSnapshot.forEach((doc) => {
+            const data = doc.data();
+            newMessages.push({
+              id: doc.id,
+              ...doc.data(),
+              createdAt: new Date(doc.data().createdAt.toMillis()),
+              user: {
+                          _id: data.user._id,
+                          name: data.user.name,
+                          avatar: "https://placeimg.com/140/140/any"
+                        },
+            });
+          });
+          cacheMessages(newMessages);
+          setMessages(newMessages);
+        }
+      );
+    } else {
+      loadCachedMessages();
+    }
+    // Clean up code
     return () => {
-      if (unsubMessages) unsubMessages();
+      if (unsubscribeMessages) unsubscribeMessages();
     };
   }, [isConnected]);
 
+  const cacheMessages = async (messagesToCache) => {
+    try {
+      await AsyncStorage.setItem("messages", JSON.stringify(messagesToCache));
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
+  const loadCachedMessages = async () => {
+    const cachedMessages = (await AsyncStorage.getItem("messages")) || [];
+    setMessages(JSON.parse(cachedMessages));
+  };
 
-  // const onSend = (newMessages) => {
-  //   addDoc(collection(db, "messages"), newMessages[0])
-  // }
-
+  
   const onSend = async (newMessages) => {
-    if (!isConnected && !isFirstConnection) {
+    //if (!isConnected && !isFirstConnection) {
+      if (!isConnected) {
       // User is offline
-      alert("Oops, network connection is lost");
+      //alert("Oops, network connection is lost. Messgaes will be sent when connection is regained.");
       setMessageBackgroundColor('gray');
     } else {
       // User is online
@@ -123,38 +82,10 @@ const Chat = ({ db, route, navigation, isConnected }) => {
   
     setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages));
   
-    if (isConnected && isFirstConnection) {
-      // Network is resumed
-      alert("Connection regained");
-      setIsFirstConnection(false);
-      
-    }
-  
     await addDoc(collection(db, 'messages'), newMessages[0]);
   };
   
   
-
-  
-  
-
- 
-  
-  // //Changing the color of renderBubble
-  // const renderBubble = (props) => {
-  //   return <Bubble
-  //   // inheriting props
-  //     {...props}
-  //     wrapperStyle={{
-  //       // right: {
-  //       //   backgroundColor: "#000"
-  //       // },
-  //       left: {
-  //         backgroundColor: "#FFF"
-  //       }
-  //     }}
-  //   />
-  // }
    
   const renderBubble = (props) => {
     const backgroundColor = isConnected ? 'blue' : 'gray';
@@ -172,12 +103,42 @@ const Chat = ({ db, route, navigation, isConnected }) => {
   };
   
   
-
-
   const renderAvatar = (props) => {
     return <Avatar {...props} />;
   };
+
+  const renderInputToolbar = (props) => {
+    return <InputToolbar {...props} />;
+  };
   
+  const renderCustomActions = (props) => {
+    return <CustomActions onSend={onSend} storage={storage} {...props} />;
+  };
+
+  const renderCustomView = (props) => {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{
+            width: 150,
+            height: 100,
+            borderRadius: 13,
+            margin: 3
+          }}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        />
+      );
+    }
+    return null;
+  };
+    
+
   return (
     
     <View style={styles.container}>
@@ -186,6 +147,9 @@ const Chat = ({ db, route, navigation, isConnected }) => {
         messages={messages}
         renderBubble={renderBubble}
         renderAvatar={renderAvatar}
+        renderActions={renderCustomActions}
+        renderInputToolbar={renderInputToolbar}
+        renderCustomView={renderCustomView}
         onSend={messages => onSend(messages)}
         user={{
           _id: userID,
@@ -222,6 +186,8 @@ const styles = StyleSheet.create({
 });
 
 export default Chat;
+
+
 
 
 
