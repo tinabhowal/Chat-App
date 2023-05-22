@@ -9,6 +9,7 @@
         }
       ]
     ],
+
     "name": "App",
     "slug": "App",
     "version": "1.0.0",
@@ -24,7 +25,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+
+      "infoPlist": {
+        
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
+
     },
     "android": {
       "permissions": ["CAMERA", "RECORD_AUDIO"],
