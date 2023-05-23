@@ -1,5 +1,10 @@
 
-import { useState, useEffect } from 'react';
+
+
+
+
+
+import { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, KeyboardAvoidingView, Platform, ImageBackground, TouchableOpacity, Button } from 'react-native';
 import { GiftedChat, Bubble, Avatar, InputToolbar } from "react-native-gifted-chat";
 import doodle from '../assets/doodle.png';
@@ -17,7 +22,9 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
   const [messages, setMessages] = useState([]);
   const [messageBackgroundColor, setMessageBackgroundColor] = useState('gray');
   //const [isFirstConnection, setIsFirstConnection] = useState(true);
-  
+  let soundObject = null;
+  const videoRef = useRef(null);
+ 
     
   let unsubscribeMessages;
   useEffect(() => {
@@ -55,6 +62,10 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
     // Clean up code
     return () => {
       if (unsubscribeMessages) unsubscribeMessages();
+      if (soundObject) soundObject.unloadAsync();
+      if (videoRef.current) {
+        videoRef.current.unloadAsync();
+      }
     };
   }, [isConnected]);
 
@@ -158,29 +169,7 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
    return null;
   };
 
-
-  // const renderMessageAudio = (props) => {
-  //   const { currentMessage } = props;
-  //   if (currentMessage.audio) {
-  //     return (
-  //       <View>
-  //         {/* Render your audio component here */}
-  //         {/* Example: */}
-  //         <Audio
-  //           source={{ uri: currentMessage.audio }}
-  //           // Add necessary props to control and style the audio component
-  //           // shouldPlay={false} 
-  //           // isLooping={false}
-  //           // style={{ width: 200, height: 40 }} 
-  //           useNativeControls
-            
-  //         />
-  //       </View>
-  //     );
-  //   }
-  //   return null;
-  // };
-
+  
   const renderMessageAudio = (props) => {
     const { currentMessage } = props;
     if (currentMessage.audio) {
@@ -190,10 +179,10 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
     style={{ backgroundColor: "#FF0", borderRadius: 10, margin: 5
     }}
     onPress={async () => {
-    // if (soundObject) soundObject.unloadAsync();
+    if (soundObject) soundObject.unloadAsync();
     const { sound } = await Audio.Sound.createAsync({ uri:
     props.currentMessage.audio });
-    // soundObject = sound;
+    soundObject = sound;
     await sound.playAsync();
     }}>
     <Text style={{ textAlign: "center", color: 'black', padding:
@@ -215,7 +204,7 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
   return (
     
     <View style={styles.container}>
-      {/* <ImageBackground source={doodle}  style={[styles.backgroundImage, { backgroundColor: selectedColor }]}> */}
+      <ImageBackground source={doodle}  style={[styles.backgroundImage, { backgroundColor: selectedColor }]}>
       <GiftedChat
         messages={messages}
         renderBubble={renderBubble}
@@ -234,7 +223,7 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
         }}
        
       />
-      {/* </ImageBackground> */}
+      </ImageBackground>
       { Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null }
       {Platform.OS === "ios"?<KeyboardAvoidingView behavior="padding" />: null}
     </View>

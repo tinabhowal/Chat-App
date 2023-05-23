@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,6 +17,7 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
   const [location, setLocation] = useState(null);
   const actionSheet = useActionSheet();
   let recordingObject = null;
+  let videoObject = null;
   
 
 
@@ -69,11 +71,11 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
     });
     }
 
-//     useEffect(() => {
-// return () => {
-// if (recordingObject) recordingObject.stopAndUnloadAsync();
-// }
-// }, []);
+    useEffect(() => {
+return () => {
+if (recordingObject) recordingObject.stopAndUnloadAsync();
+}
+}, []);
 
 
 
@@ -131,6 +133,7 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
       });
 
       if (!result.canceled) {
+        videoObject = result;
         await uploadAndSendVideo(result.uri);
         setMedia(result.uri);
       } else {
@@ -139,6 +142,21 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
     }
   };
 
+  const cleanupVideoRecording = async () => {
+    try {
+      await videoObject.unloadAsync();
+    } catch (error) {
+      console.log('Error occurred while unloading the video:', error);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      cleanupVideoRecording();
+    };
+  }, []);
+
+  
   const generateReference = (uri) => {
     const timeStamp = new Date().getTime();
     const imageName = uri.split('/').pop();
