@@ -17,7 +17,8 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
   const [location, setLocation] = useState(null);
   const actionSheet = useActionSheet();
   let recordingObject = null;
-  let videoObject = null;
+  const [videoObject, setVideoObject] = useState(null);
+
   
 
 
@@ -100,7 +101,7 @@ if (recordingObject) recordingObject.stopAndUnloadAsync();
       });
 
       if (!result.canceled) {
-        
+        setVideoObject(result);
         await uploadAndSendVideo(result.uri);
         setMedia(result.uri);
       } else {
@@ -133,7 +134,7 @@ if (recordingObject) recordingObject.stopAndUnloadAsync();
       });
 
       if (!result.canceled) {
-        videoObject = result;
+        setVideoObject(result);
         await uploadAndSendVideo(result.uri);
         setMedia(result.uri);
       } else {
@@ -144,11 +145,14 @@ if (recordingObject) recordingObject.stopAndUnloadAsync();
 
   const cleanupVideoRecording = async () => {
     try {
-      await videoObject.unloadAsync();
+      if (videoObject && videoObject.unloadAsync) {
+        await videoObject.unloadAsync();
+      }
     } catch (error) {
       console.log('Error occurred while unloading the video:', error);
     }
   };
+  
 
   useEffect(() => {
     return () => {

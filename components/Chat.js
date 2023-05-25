@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, KeyboardAvoidingView, Platform, ImageBackground, TouchableOpacity, Button } from 'react-native';
 import { GiftedChat, Bubble, Avatar, InputToolbar } from "react-native-gifted-chat";
@@ -63,8 +58,8 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
     return () => {
       if (unsubscribeMessages) unsubscribeMessages();
       if (soundObject) soundObject.unloadAsync();
-      if (videoRef.current) {
-        videoRef.current.unloadAsync();
+      if (videoRef.currentMessage) {
+        videoRef.currentMessage.unloadAsync();
       }
     };
   }, [isConnected]);
@@ -110,6 +105,14 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
         wrapperStyle={{
           right: {
             backgroundColor: backgroundColor,
+          },
+        }}
+        textStyle={{
+          left: {
+            fontSize: 20, // Replace with the desired font size for the left side
+          },
+          right: {
+            fontSize: 20, // Replace with the desired font size for the right side
           },
         }}
       />
@@ -159,6 +162,7 @@ const Chat = ({ db, route, navigation, isConnected, storage }) => {
       <View>
         {/* <Text>{currentMessage.video}</Text> */}
         <Video
+          ref={videoRef}
           source={{ uri: currentMessage.video }}
           style={{ width: 200, height: 200 }}
           useNativeControls
